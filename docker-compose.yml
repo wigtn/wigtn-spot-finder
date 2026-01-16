@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Main Application - Business Agent API
+  # ==========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spotfinder-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/spotfinder_db
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - VLLM_BASE_URL=http://vllm:8000/v1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    volumes:
+      - ./src:/app/src:ro
+    networks:
+      - spotfinder-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Observer Agent (Background Process)
+  # ==========================================================================
+  observer:
+    build:
+      context: .
+      dockerfile: Dockerfile.observer
+    container_name: spotfinder-observer
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/spotfinder_db
+      - REDIS_URL=redis://redis:6379/0
+      - OBSERVER_AGENT_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - spotfinder-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: spotfinder-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: spotfinder_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spotfinder-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Redis (Event Queue, Cache, Rate Limiting)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: spotfinder-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spotfinder-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # Qdrant Vector Database
+  # ==========================================================================
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: spotfinder-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - spotfinder-network
+    restart: unless-stopped
+
+  # ==========================================================================
+  # vLLM Server (Optional - for local development)
+  # Note: Requires GPU. Comment out if using external vLLM server.
+  # ==========================================================================
+  # vllm:
+  #   image: vllm/vllm-openai:latest
+  #   container_name: spotfinder-vllm
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #   command: >
+  #     --model Qwen/Qwen2.5-7B-Instruct
+  #     --port 8000
+  #     --host 0.0.0.0
+  #     --trust-remote-code
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - vllm_cache:/root/.cache/huggingface
+  #   networks:
+  #     - spotfinder-network
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  # vllm_cache:
+
+networks:
+  spotfinder-network:
+    driver: bridge

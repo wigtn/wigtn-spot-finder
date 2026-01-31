@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # Upstage API
     upstage_api_key: str | None = Field(default=None)
-    upstage_base_url: str = Field(default="https://api.upstage.ai/v1/solar")
+    upstage_base_url: str = Field(default="https://api.upstage.ai/v1")
     upstage_chat_model: str = Field(default="solar-pro")
     upstage_embedding_model: str = Field(default="solar-embedding-1-large")
     upstage_embedding_url: str = Field(default="https://api.upstage.ai/v1/solar/embeddings")

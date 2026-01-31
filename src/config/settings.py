@@ -26,12 +26,23 @@ class Settings(BaseSettings):
     environment: Literal["development", "staging", "production"] = "development"
     debug: bool = False
 
-    # vLLM / LLM
+    # vLLM / LLM (legacy - used when use_upstage=False)
     vllm_base_url: str = Field(default="http://localhost:8000/v1")
     vllm_model_name: str = Field(default="Qwen/Qwen2.5-7B-Instruct")
     vllm_api_key: str = Field(default="EMPTY")
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     llm_max_tokens: int = Field(default=2048, ge=1)
+
+    # Upstage API
+    upstage_api_key: str | None = Field(default=None)
+    upstage_base_url: str = Field(default="https://api.upstage.ai/v1/solar")
+    upstage_chat_model: str = Field(default="solar-pro")
+    upstage_embedding_model: str = Field(default="solar-embedding-1-large")
+    upstage_embedding_url: str = Field(default="https://api.upstage.ai/v1/solar/embeddings")
+    upstage_document_url: str = Field(default="https://api.upstage.ai/v1/document-digitization")
+    upstage_document_model: str = Field(default="document-parse-260128")
+    upstage_embedding_dimension: int = Field(default=4096)
+    use_upstage: bool = Field(default=True)
 
     # Database
     database_url: str = Field(
@@ -98,8 +109,24 @@ class Settings(BaseSettings):
     # Travel Features
     enable_place_caching: bool = Field(default=True)
     place_cache_ttl_hours: int = Field(default=1, ge=1)
-    default_language: str = Field(default="en")
-    supported_languages: list[str] = Field(default=["en", "zh", "ja", "ko"])
+    default_language: str = Field(default="ja")  # Default to Japanese for Seongsu popup finder
+    supported_languages: list[str] = Field(default=["ja", "en", "ko", "zh"])
+    krw_to_usd_rate: float = Field(default=1400.0, ge=1.0)  # KRW to USD exchange rate
+
+    # Instagram Scraping
+    instagram_username: str | None = Field(default=None)
+    instagram_password: str | None = Field(default=None)
+    instagram_target_account: str = Field(default="seongsu_bible")
+    scrape_interval_hours: int = Field(default=6, ge=1)
+    scrape_delay_seconds: float = Field(default=1.0, ge=0.0)
+    min_confidence_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
+
+    # SQLite Database
+    sqlite_db_path: str = Field(default="data/popups.db")
+
+    # Supabase Auth
+    supabase_url: str = Field(default="")
+    supabase_key: str = Field(default="")  # anon/public key
 
     # Feature Flags
     observer_agent_enabled: bool = Field(default=True)

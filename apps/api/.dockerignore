@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+tests/
+coverage/
+.coverage
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development
+.env.local
+.env.development
+*.log
+
+# Data (except production db)
+data/*.json
+data/*.csv
+!data/popups.db
+
+# Lock files (rebuild in container)
+uv.lock

@@ -28,7 +28,8 @@ Thumbs.db
 migrations/
 .vercel
 docs/references/
-data/
+data/*
+!data/popups.db
 uv.lock
 
 # Node

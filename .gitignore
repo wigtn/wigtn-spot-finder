@@ -28,10 +28,16 @@ Thumbs.db
 migrations/
 .vercel
 docs/references/
-data/*
-!data/popups.db
-uv.lock
+**/data/*
+!**/data/popups.db
 
 # Node
 node_modules/
 .next/
+
+# Mobile
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo/
+*.jks
+*.keystore

@@ -1,5 +1,5 @@
-# Dockerfile for spotfinder-agent-for-foreigner API Server
-# Multi-stage build for smaller image size
+# Dockerfile for spotfinder API Server
+# Uses uv for fast Python package management
 
 # =============================================================================
 # Stage 1: Builder
@@ -8,20 +8,21 @@ FROM python:3.11-slim as builder
 
 WORKDIR /app
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy dependency files
+COPY pyproject.toml ./
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install dependencies with uv
+RUN uv venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    uv pip install --no-cache -e .
 
 # =============================================================================
 # Stage 2: Runtime

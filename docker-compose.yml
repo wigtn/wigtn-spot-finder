@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   # ==========================================================================
-  # Main Application - Business Agent API
+  # Backend API Service
   # ==========================================================================
   api:
     build:
-      context: .
+      context: ./apps/api
       dockerfile: Dockerfile
     container_name: spotfinder-api
     ports:
@@ -17,7 +17,6 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/spotfinder_db
       - REDIS_URL=redis://redis:6379/0
       - QDRANT_URL=http://qdrant:6333
-      - VLLM_BASE_URL=http://vllm:8000/v1
     depends_on:
       postgres:
         condition: service_healthy
@@ -26,29 +25,26 @@ services:
       qdrant:
         condition: service_started
     volumes:
-      - ./src:/app/src:ro
+      - ./apps/api/src:/app/src:ro
     networks:
       - spotfinder-network
     restart: unless-stopped
 
   # ==========================================================================
-  # Observer Agent (Background Process)
+  # Web Frontend Service (Next.js)
   # ==========================================================================
-  observer:
+  web:
     build:
-      context: .
-      dockerfile: Dockerfile.observer
-    container_name: spotfinder-observer
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: spotfinder-web
+    ports:
+      - "3000:3000"
     environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/spotfinder_db
-      - REDIS_URL=redis://redis:6379/0
-      - OBSERVER_AGENT_ENABLED=true
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:8080
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - api
     networks:
       - spotfinder-network
     restart: unless-stopped

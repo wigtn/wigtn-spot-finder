@@ -34,6 +34,73 @@ class EmbeddingProvider(ABC):
         pass
 
 
+class UpstageEmbeddingProvider(EmbeddingProvider):
+    """
+    Embedding provider using Upstage Solar Embedding API.
+    Uses solar-embedding-1-large model (4096 dimensions).
+    """
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str | None = None,
+    ):
+        """
+        Initialize Upstage embedding provider.
+
+        Args:
+            api_key: Upstage API key
+            model: Embedding model name
+        """
+        self.api_key = api_key or settings.upstage_api_key
+        self.model = model or settings.upstage_embedding_model
+        self._dimension = settings.upstage_embedding_dimension  # 4096
+
+    @property
+    def dimension(self) -> int:
+        return self._dimension
+
+    async def embed_text(self, text: str) -> list[float]:
+        """Generate embedding for a single text."""
+        embeddings = await self.embed_texts([text])
+        return embeddings[0]
+
+    async def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Generate embeddings for multiple texts."""
+        if not self.api_key:
+            raise ValueError("Upstage API key not configured")
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        payload = {
+            "model": self.model,
+            "input": texts,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                settings.upstage_embedding_url,
+                json=payload,
+                headers=headers,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+
+            # Sort by index to ensure correct order
+            embeddings_data = sorted(data["data"], key=lambda x: x["index"])
+            embeddings = [item["embedding"] for item in embeddings_data]
+
+            # Update dimension based on actual response
+            if embeddings:
+                self._dimension = len(embeddings[0])
+
+            return embeddings
+
+
 class VLLMEmbeddingProvider(EmbeddingProvider):
     """
     Embedding provider using vLLM server.
@@ -228,7 +295,11 @@ class EmbeddingService:
         """Get default provider chain based on configuration."""
         providers = []
 
-        # Primary: vLLM if configured
+        # Primary: Upstage if configured and enabled
+        if settings.use_upstage and settings.upstage_api_key:
+            providers.append(UpstageEmbeddingProvider())
+
+        # Fallback: vLLM if configured
         if settings.vllm_base_url:
             providers.append(VLLMEmbeddingProvider())
 

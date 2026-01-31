@@ -251,6 +251,7 @@ async def translate_from_korean(text: str, target_language: str = "en") -> str:
 
 # Common phrases helper
 COMMON_PHRASES = {
+    # Basic expressions
     "hello": "안녕하세요 (annyeonghaseyo)",
     "thank you": "감사합니다 (gamsahamnida)",
     "excuse me": "실례합니다 (sillyehamnida)",
@@ -267,6 +268,59 @@ COMMON_PHRASES = {
     "one": "하나 (hana)",
     "two": "둘 (dul)",
     "three": "셋 (set)",
+
+    # Popup store phrases
+    "popup store": "팝업스토어 (pap-eop seuteo)",
+    "when does it end": "언제까지 해요? (eonjekkaji haeyo?)",
+    "can i take photos": "사진 찍어도 돼요? (sajin jjigeodo dwaeyo?)",
+    "limited edition": "한정판 (hanjeongpan)",
+    "sold out": "품절 (pumjeol)",
+    "waiting line": "대기줄 (daegijul)",
+    "how long is the wait": "얼마나 기다려야 해요? (eolmana gidaryeoya haeyo?)",
+    "reservation": "예약 (yeyak)",
+    "free entry": "무료 입장 (muryo ipjang)",
+    "event": "이벤트 (ibenteu)",
+    "collaboration": "콜라보 (kollabo)",
+    "goods": "굿즈 (gutjeu)",
+    "photo zone": "포토존 (potozeon)",
+
+    # Seongsu-dong specific
+    "seongsu station": "성수역 (seongsu-yeok)",
+    "seoul forest": "서울숲 (seoul-sup)",
+    "exit number": "번 출구 (beon chulgu)",
+}
+
+# Japanese tourist phrases (日本語 → 韓国語)
+JAPANESE_PHRASES = {
+    # Basic expressions
+    "こんにちは": "안녕하세요 (annyeonghaseyo)",
+    "ありがとう": "감사합니다 (gamsahamnida)",
+    "すみません": "실례합니다 (sillyehamnida) / 저기요 (jeogiyo)",
+    "いくらですか": "얼마예요? (eolmayeyo?)",
+    "これください": "이거 주세요 (igeo juseyo)",
+    "おいしい": "맛있어요 (masisseoyo)",
+    "お会計": "계산해 주세요 (gyesanhae juseyo)",
+
+    # Popup store phrases
+    "ポップアップストア": "팝업스토어 (pap-eop seuteo)",
+    "いつまでですか": "언제까지 해요? (eonjekkaji haeyo?)",
+    "写真撮ってもいいですか": "사진 찍어도 돼요? (sajin jjigeodo dwaeyo?)",
+    "限定品": "한정판 (hanjeongpan)",
+    "売り切れ": "품절 (pumjeol)",
+    "並んでますか": "줄 서야 해요? (jul seoya haeyo?)",
+    "待ち時間": "대기 시간 (daegi sigan)",
+    "予約": "예약 (yeyak)",
+    "入場無料": "무료 입장 (muryo ipjang)",
+    "コラボ": "콜라보 (kollabo)",
+    "グッズ": "굿즈 (gutjeu)",
+    "フォトスポット": "포토존 (potozeon)",
+
+    # Directions
+    "駅": "역 (yeok)",
+    "出口": "출구 (chulgu)",
+    "ここはどこですか": "여기가 어디예요? (yeogiga eodiyeyo?)",
+    "成水駅": "성수역 (seongsu-yeok)",
+    "ソウルの森": "서울숲 (seoul-sup)",
 }
 
 
@@ -296,10 +350,64 @@ async def get_korean_phrase(phrase: str) -> str:
     return f"Could not translate '{phrase}'. Try using the translate tool."
 
 
+@tool
+async def get_popup_phrases(language: str = "en") -> str:
+    """
+    Get useful phrases for visiting popup stores in Korea.
+
+    Use this when Japanese or English-speaking tourists need help
+    communicating at popup stores.
+
+    Args:
+        language: Source language ("en" for English, "ja" for Japanese)
+
+    Returns:
+        List of useful Korean phrases with pronunciation
+    """
+    if language == "ja":
+        lines = ["**日本語 → 韓国語 ポップアップストア フレーズ集**\n"]
+
+        categories = {
+            "基本表現": ["こんにちは", "ありがとう", "すみません", "いくらですか", "これください"],
+            "ポップアップストア": ["ポップアップストア", "いつまでですか", "写真撮ってもいいですか", "限定品", "売り切れ"],
+            "待ち・予約": ["並んでますか", "待ち時間", "予約", "入場無料"],
+            "グッズ・写真": ["コラボ", "グッズ", "フォトスポット"],
+            "道案内": ["駅", "出口", "成水駅", "ソウルの森"],
+        }
+
+        for cat_name, phrases in categories.items():
+            lines.append(f"\n**{cat_name}:**")
+            for jp in phrases:
+                if jp in JAPANESE_PHRASES:
+                    lines.append(f"- {jp} → {JAPANESE_PHRASES[jp]}")
+
+        return "\n".join(lines)
+
+    else:
+        lines = ["**Useful Korean Phrases for Popup Store Visits**\n"]
+
+        categories = {
+            "Basic": ["hello", "thank you", "excuse me", "how much"],
+            "Popup Store": ["popup store", "when does it end", "can i take photos", "limited edition", "sold out"],
+            "Waiting & Entry": ["waiting line", "how long is the wait", "reservation", "free entry"],
+            "Shopping": ["goods", "photo zone", "event", "collaboration"],
+            "Seongsu": ["seongsu station", "seoul forest", "exit number"],
+        }
+
+        for cat_name, phrases in categories.items():
+            lines.append(f"\n**{cat_name}:**")
+            for en in phrases:
+                if en in COMMON_PHRASES:
+                    lines.append(f"- {en.title()} → {COMMON_PHRASES[en]}")
+
+        return "\n".join(lines)
+
+
 # Export tools for agent
 translation_tools = [
     translate,
     translate_to_korean,
     translate_from_korean,
     get_korean_phrase,
+    get_popup_phrases,
 ]

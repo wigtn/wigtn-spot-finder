@@ -68,6 +68,15 @@ dependencies = [
     # Utilities
     "orjson>=3.9.0",
     "tenacity>=8.2.0",
+
+    # Instagram Scraping
+    "instaloader>=4.10.0",
+
+    # Scheduler
+    "apscheduler>=3.10.0",
+
+    # SQLite async
+    "aiosqlite>=0.19.0",
 ]
 
 [project.optional-dependencies]
@@ -84,6 +93,7 @@ dev = [
 [project.scripts]
 spotfinder = "src.api.main:main"
 observer = "scripts.run_observer:main"
+scraper = "scripts.run_scraper:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

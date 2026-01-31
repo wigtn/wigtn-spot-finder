@@ -1,5 +1,5 @@
 """
-Naver API tools for place search and directions.
+Naver API tools for place search, directions, and geocoding.
 """
 
 from src.tools.naver.place_search import (
@@ -17,6 +17,14 @@ from src.tools.naver.directions import (
     DirectionsResult,
     directions_tools,
 )
+from src.tools.naver.geocoding import (
+    geocode_address,
+    batch_geocode_addresses,
+    generate_naver_map_url,
+    generate_naver_place_search_url,
+    generate_naver_directions_url,
+    GeocodingResult,
+)
 
 __all__ = [
     # Place Search
@@ -32,4 +40,11 @@ __all__ = [
     "get_directions_naver",
     "DirectionsResult",
     "directions_tools",
+    # Geocoding
+    "geocode_address",
+    "batch_geocode_addresses",
+    "generate_naver_map_url",
+    "generate_naver_place_search_url",
+    "generate_naver_directions_url",
+    "GeocodingResult",
 ]

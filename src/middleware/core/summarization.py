@@ -9,7 +9,7 @@ from typing import Any
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
 
 from src.config.settings import settings
-from src.services.llm.vllm_client import get_summarization_model
+from src.services.llm.upstage_client import get_summarization_model
 from src.utils.tokens import count_tokens, count_messages_tokens
 
 logger = logging.getLogger(__name__)

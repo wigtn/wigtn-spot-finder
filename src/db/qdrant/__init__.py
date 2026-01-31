@@ -8,7 +8,8 @@ from src.db.qdrant.connection import (
     check_qdrant_health,
     close_qdrant_client,
     MEMORY_COLLECTION,
-    MEMORY_VECTOR_SIZE,
+    POPUP_COLLECTION,
+    get_vector_size,
 )
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "check_qdrant_health",
     "close_qdrant_client",
     "MEMORY_COLLECTION",
-    "MEMORY_VECTOR_SIZE",
+    "POPUP_COLLECTION",
+    "get_vector_size",
 ]

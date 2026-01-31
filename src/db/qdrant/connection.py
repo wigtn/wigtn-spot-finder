@@ -18,7 +18,12 @@ _qdrant_client: QdrantClient | None = None
 
 # Collection configuration
 MEMORY_COLLECTION = "travel_memories"
-MEMORY_VECTOR_SIZE = 1536  # OpenAI embedding size (also works with many others)
+POPUP_COLLECTION = "seongsu_popups"
+
+
+def get_vector_size() -> int:
+    """Get vector size from settings (Upstage embedding dimension)."""
+    return settings.upstage_embedding_dimension
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -58,7 +63,7 @@ async def init_collections():
             client.create_collection(
                 collection_name=MEMORY_COLLECTION,
                 vectors_config=models.VectorParams(
-                    size=MEMORY_VECTOR_SIZE,
+                    size=get_vector_size(),
                     distance=models.Distance.COSINE,
                 ),
                 # Optimized for filtering by user/thread
@@ -98,6 +103,56 @@ async def init_collections():
         else:
             logger.info(f"Collection already exists: {MEMORY_COLLECTION}")
 
+        # Create popup collection for Seongsu popup stores
+        if POPUP_COLLECTION not in collection_names:
+            client.create_collection(
+                collection_name=POPUP_COLLECTION,
+                vectors_config=models.VectorParams(
+                    size=get_vector_size(),
+                    distance=models.Distance.COSINE,
+                ),
+                hnsw_config=models.HnswConfigDiff(
+                    payload_m=16,
+                    m=16,
+                    ef_construct=100,
+                ),
+            )
+
+            # Create payload indexes for popup filtering
+            client.create_payload_index(
+                collection_name=POPUP_COLLECTION,
+                field_name="popup_id",
+                field_schema=models.PayloadSchemaType.KEYWORD,
+            )
+
+            client.create_payload_index(
+                collection_name=POPUP_COLLECTION,
+                field_name="category",
+                field_schema=models.PayloadSchemaType.KEYWORD,
+            )
+
+            client.create_payload_index(
+                collection_name=POPUP_COLLECTION,
+                field_name="is_active",
+                field_schema=models.PayloadSchemaType.BOOL,
+            )
+
+            client.create_payload_index(
+                collection_name=POPUP_COLLECTION,
+                field_name="period_start",
+                field_schema=models.PayloadSchemaType.DATETIME,
+            )
+
+            client.create_payload_index(
+                collection_name=POPUP_COLLECTION,
+                field_name="period_end",
+                field_schema=models.PayloadSchemaType.DATETIME,
+            )
+
+            logger.info(f"Created collection: {POPUP_COLLECTION}")
+        else:
+            logger.info(f"Collection already exists: {POPUP_COLLECTION}")
+
     except UnexpectedResponse as e:
         logger.error(f"Failed to initialize Qdrant collections: {e}")
         raise
@@ -113,22 +168,33 @@ async def check_qdrant_health() -> dict[str, Any]:
     try:
         client = get_qdrant_client()
         collections = client.get_collections()
+        collection_names = [c.name for c in collections.collections]
 
-        # Get collection info
-        collection_info = None
-        for col in collections.collections:
-            if col.name == MEMORY_COLLECTION:
-                collection_info = client.get_collection(MEMORY_COLLECTION)
-                break
+        # Get memory collection info
+        memory_info = None
+        if MEMORY_COLLECTION in collection_names:
+            col = client.get_collection(MEMORY_COLLECTION)
+            memory_info = {
+                "name": MEMORY_COLLECTION,
+                "points_count": col.points_count,
+                "vectors_count": col.vectors_count,
+            }
+
+        # Get popup collection info
+        popup_info = None
+        if POPUP_COLLECTION in collection_names:
+            col = client.get_collection(POPUP_COLLECTION)
+            popup_info = {
+                "name": POPUP_COLLECTION,
+                "points_count": col.points_count,
+                "vectors_count": col.vectors_count,
+            }
 
         return {
             "status": "healthy",
             "collections": len(collections.collections),
-            "memory_collection": {
-                "name": MEMORY_COLLECTION,
-                "points_count": collection_info.points_count if collection_info else 0,
-                "vectors_count": collection_info.vectors_count if collection_info else 0,
-            } if collection_info else None,
+            "memory_collection": memory_info,
+            "popup_collection": popup_info,
         }
 
     except Exception as e:

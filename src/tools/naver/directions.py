@@ -14,6 +14,9 @@ from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# Exchange rate for display purposes
+KRW_TO_USD_RATE = settings.krw_to_usd_rate
+
 # Naver Directions API endpoint
 NAVER_DIRECTIONS_URL = "https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving"
 NAVER_DIRECTIONS15_URL = "https://naveropenapi.apigw.ntruss.com/map-direction-15/v1/driving"
@@ -161,7 +164,7 @@ def format_directions_result(result: DirectionsResult | None) -> str:
 
     # Add cost estimates
     if result.taxi_fare > 0:
-        lines.append(f"**Estimated Taxi Fare:** ₩{result.taxi_fare:,} (~${result.taxi_fare / 1400:.2f} USD)")
+        lines.append(f"**Estimated Taxi Fare:** ₩{result.taxi_fare:,} (~${result.taxi_fare / KRW_TO_USD_RATE:.2f} USD)")
 
     if result.toll_fare > 0:
         lines.append(f"**Toll Fare:** ₩{result.toll_fare:,}")
@@ -183,6 +186,7 @@ def format_directions_result(result: DirectionsResult | None) -> str:
 
 # Coordinate lookup helper (simplified - in production, use geocoding API)
 KNOWN_LOCATIONS = {
+    # Major landmarks
     "gyeongbokgung": (126.9769, 37.5788),
     "경복궁": (126.9769, 37.5788),
     "myeongdong": (126.9856, 37.5636),
@@ -207,6 +211,29 @@ KNOWN_LOCATIONS = {
     "서울역": (126.9706, 37.5547),
     "incheon airport": (126.4407, 37.4602),
     "인천공항": (126.4407, 37.4602),
+
+    # Seongsu-dong landmarks (성수동)
+    "seongsu station": (127.0558, 37.5447),
+    "seongsu": (127.0558, 37.5447),
+    "성수역": (127.0558, 37.5447),
+    "성수": (127.0558, 37.5447),
+    "seoul forest": (127.0375, 37.5443),
+    "서울숲": (127.0375, 37.5443),
+    "onion seongsu": (127.0561, 37.5449),
+    "어니언 성수": (127.0561, 37.5449),
+    "daelim warehouse": (127.0522, 37.5448),
+    "대림창고": (127.0522, 37.5448),
+    "seongsu-dong": (127.0550, 37.5445),
+    "성수동": (127.0550, 37.5445),
+    "ttukseom": (127.0656, 37.5475),
+    "뚝섬": (127.0656, 37.5475),
+    "ttukseom station": (127.0470, 37.5475),
+    "뚝섬역": (127.0470, 37.5475),
+    "seongsu 2-ga": (127.0580, 37.5440),
+    "성수2가": (127.0580, 37.5440),
+    "kcoffee": (127.0545, 37.5442),
+    "common ground": (127.0472, 37.5444),
+    "커먼그라운드": (127.0472, 37.5444),
 }
 
 
@@ -293,7 +320,7 @@ async def get_travel_time(
         f"Travel from **{start}** to **{destination}**:\n"
         f"- Distance: {result.total_distance_km} km\n"
         f"- By car/taxi: ~{result.total_duration_minutes} minutes\n"
-        f"- Estimated taxi fare: ₩{result.taxi_fare:,} (~${result.taxi_fare / 1400:.2f} USD)"
+        f"- Estimated taxi fare: ₩{result.taxi_fare:,} (~${result.taxi_fare / KRW_TO_USD_RATE:.2f} USD)"
     )
 
 

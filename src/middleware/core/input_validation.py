@@ -54,6 +54,10 @@ class InputValidationError(Exception):
         super().__init__(self.message)
 
 
+# Alias for backward compatibility
+PromptInjectionError = InputValidationError
+
+
 class InputValidationMiddleware:
     """
     Middleware to validate and sanitize user input.

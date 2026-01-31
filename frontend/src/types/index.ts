@@ -49,6 +49,19 @@ export interface PopupSummary {
   is_active: boolean;
 }
 
+// Chat Popup Card - lightweight popup data for chat display
+export interface ChatPopupCard {
+  id: string;
+  name: string;
+  name_korean: string | null;
+  category: PopupCategory;
+  location: string;
+  period_start: string | null;
+  period_end: string | null;
+  thumbnail_url: string | null;
+  is_active: boolean;
+}
+
 // Chat Types
 export interface ChatMessage {
   id: string;

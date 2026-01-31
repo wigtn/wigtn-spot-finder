@@ -3,6 +3,7 @@ Popup Store Search Tools for Seongsu popup finder.
 Provides LangChain tools for searching and retrieving popup store information.
 """
 
+import json
 import logging
 from datetime import date
 from typing import Any
@@ -13,6 +14,10 @@ from src.db.sqlite.popup_store import get_popup_db
 from src.models.popup import PopupCategory
 
 logger = logging.getLogger(__name__)
+
+# Delimiters for structured popup data in responses
+POPUP_CARDS_START = "<<<POPUP_CARDS>>>"
+POPUP_CARDS_END = "<<<END_POPUP_CARDS>>>"
 
 # Category descriptions for user-friendly display
 CATEGORY_DESCRIPTIONS = {
@@ -26,6 +31,29 @@ CATEGORY_DESCRIPTIONS = {
     "collaboration": "브랜드 콜라보 (Brand Collaboration)",
     "other": "기타 (Other)",
 }
+
+
+def _popup_to_card_data(popup: Any) -> dict:
+    """Convert popup to card data for frontend display."""
+    return {
+        "id": popup.id,
+        "name": popup.name,
+        "name_korean": popup.name_korean,
+        "category": popup.category.value if hasattr(popup.category, 'value') else popup.category,
+        "location": popup.location,
+        "period_start": popup.period_start.isoformat() if popup.period_start else None,
+        "period_end": popup.period_end.isoformat() if popup.period_end else None,
+        "thumbnail_url": popup.thumbnail_url,
+        "is_active": popup.is_active,
+    }
+
+
+def _format_popup_cards_json(popups: list) -> str:
+    """Format popups as JSON block for frontend card display."""
+    if not popups:
+        return ""
+    cards_data = [_popup_to_card_data(p) for p in popups]
+    return f"\n{POPUP_CARDS_START}\n{json.dumps(cards_data, ensure_ascii=False)}\n{POPUP_CARDS_END}\n"
 
 
 def _format_popup_for_display(popup: Any, include_details: bool = False) -> str:
@@ -130,6 +158,9 @@ async def search_seongsu_popups(
             result_lines.append(f"{i}. {_format_popup_for_display(popup)}")
             result_lines.append("")
 
+        # Add JSON block for frontend card display
+        result_lines.append(_format_popup_cards_json(popups))
+
         return "\n".join(result_lines)
 
     except Exception as e:
@@ -215,6 +246,9 @@ async def list_current_popups(category: str | None = None) -> str:
         for i, popup in enumerate(popups, 1):
             result_lines.append(f"{i}. {_format_popup_for_display(popup)}")
             result_lines.append("")
+
+        # Add JSON block for frontend card display
+        result_lines.append(_format_popup_cards_json(popups))
 
         return "\n".join(result_lines)
 

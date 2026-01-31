@@ -96,7 +96,11 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.debug else ["https://yourdomain.com"],
+    allow_origins=[
+        "https://frontend-blue-gamma-56.vercel.app",
+        "https://*.vercel.app",
+        "http://localhost:3000",
+    ] if not settings.debug else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

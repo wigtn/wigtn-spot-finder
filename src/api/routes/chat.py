@@ -170,17 +170,18 @@ async def chat_stream(request: ChatRequest):
     agent = create_business_agent()
 
     async def generate():
+        import json
         try:
             async for chunk in agent.stream(
                 message=request.message,
                 thread_id=thread_id,
                 state=state,
             ):
-                yield f"data: {chunk}\n\n"
+                yield f"data: {json.dumps({'content': chunk, 'thread_id': thread_id})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(f"Stream error: {e}")
-            yield f"data: [ERROR] {str(e)}\n\n"
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(
         generate(),
